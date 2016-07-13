@@ -70,7 +70,10 @@ Accepts two parameters
         base: '',
         trailingSlash: false,
         autoCleanUp: true,
-        strictQueryParams: true
+        strictQueryParams: true,
+        logger: false,
+        history: false,
+        listener: false
 }
 ```
 * Use of hash part of URL - Set useHash to true if you want the paths of your routes to be prefixed with a hash. You can also choose a hashPrefix which will be inserted between the path of a route and the hash. Those options will mostly be used by plugins such as router5-history.
@@ -86,6 +89,12 @@ Accepts two parameters
 * Automatic clean up - If autoCleanUp is set to true, the router will automatically clear canDeactivate functions / booleans when their associated segment becomes inactive.
 
 * Strict query parameters - Query parameters are optional, meaning a route can still be matched if a query parameter defined in its path is not present. However, if extra query parameters are present in the path which is being matched, matching will fail. If you want the router to still match routes if extra query parameters are present, set strictQueryParams to false.
+
+* logger - Enable router logger using logger plugin.
+
+* history -  Enable history using history plugin.
+ 
+* listener - Enable listener using listener plugin.
 
 
 #### reRegister: function
