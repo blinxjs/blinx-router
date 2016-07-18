@@ -13,7 +13,7 @@ import listenersPlugin from "router5-listeners";
  */
 let Router = new Router5();
 let routesStore = {};
-let lastState;
+let lastState = {};
 
 /**
  *
@@ -38,7 +38,7 @@ let addMethodsOnInstance = function (routeMap, Truss) {
 
     routeMap.canActivate = function (toRoute, fromRoute, done) {
 
-        if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
+        if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
             return true;
         }
 
@@ -193,7 +193,15 @@ export default {
      * @returns {*}
      */
     getRouteParams: function () {
-        return Object.assign({}, lastState.params);
+        if(Object.keys(lastState).length > 0){
+            return Object.assign({}, lastState.params);
+        } else {
+            return Router.lastStateAttempt.params;
+        }
+    },
+
+    addRouteListener: function (){
+        return Router.addRouteListener.apply(this, arguments);
     },
     /**
      * Returns the current route

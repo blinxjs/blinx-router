@@ -86,7 +86,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var Router = new _router.Router5();
 	var routesStore = {};
-	var lastState = void 0;
+	var lastState = {};
 
 	/**
 	 *
@@ -111,7 +111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    routeMap.canActivate = function (toRoute, fromRoute, done) {
 
-	        if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
+	        if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
 	            return true;
 	        }
 
@@ -266,7 +266,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @returns {*}
 	     */
 	    getRouteParams: function getRouteParams() {
-	        return Object.assign({}, lastState.params);
+	        if (Object.keys(lastState).length > 0) {
+	            return Object.assign({}, lastState.params);
+	        } else {
+	            return Router.lastStateAttempt.params;
+	        }
+	    },
+
+	    addRouteListener: function addRouteListener() {
+	        return Router.addRouteListener.apply(this, arguments);
 	    },
 	    /**
 	     * Returns the current route
