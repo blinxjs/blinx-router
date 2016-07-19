@@ -203,6 +203,14 @@ export default {
     addRouteListener: function (){
         return Router.addRouteListener.apply(this, arguments);
     },
+
+    addListener: function (){
+        return Router.addListener.apply(this, arguments);
+    },
+
+    addNodeListener: function (){
+        return Router.addNodeListener.apply(this, arguments);
+    },
     /**
      * Returns the current route
      * @returns {*}
