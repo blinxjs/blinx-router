@@ -96,7 +96,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      name: name of the route
 	 *      path: path of the route
 	 * }
-	 * @param Truss [object]. Used to create and destory instances of modules.
+	 * @param Blinx [object]. Used to create and destory instances of modules.
 	 * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
 	 * If the value returned is false then the rendering does not happen.
 	 * Should render is an optional parameter in module</p>
@@ -105,7 +105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * If the value returned is false then the module is not destryed on route change.</p>
 	 *
 	 */
-	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, Truss) {
+	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, Blinx) {
 
 	    routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
@@ -120,7 +120,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        lastState = toRoute;
 
 	        if (moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute) || !moduleData.module.shouldRender) {
-	            return Truss.createInstance(moduleData);
+	            return Blinx.createInstance(moduleData);
 	        }
 
 	        done();
@@ -135,7 +135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
 	        if (moduleData.module.shouldDestroy && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-	            Truss.destroyInstance(moduleData);
+	            Blinx.destroyInstance(moduleData);
 	        }
 
 	        moduleData.initialized = false;
@@ -146,25 +146,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
 	 */
-	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, Truss) {
+	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, Blinx) {
 
 	    if (Array.isArray(routeMap)) {
 	        routeMap.forEach(function (route) {
 	            route.moduleConfig.name = route.name;
-	            addMethodsOnInstance(route, Truss);
+	            addMethodsOnInstance(route, Blinx);
 	        });
 	    } else {
-	        addMethodsOnInstance(routeMap, Truss);
+	        addMethodsOnInstance(routeMap, Blinx);
 	    }
 	};
 
 	exports.default = {
 	    /**
 	     *
-	     * @param Truss [object]
+	     * @param Blinx [object]
 	     */
-	    init: function init(Truss) {
-	        this.Truss = Truss;
+	    init: function init(Blinx) {
+	        this.Blinx = Blinx;
 	    },
 	    /**
 	     *
@@ -177,7 +177,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
 	     */
 	    configure: function configure(routeMap, config) {
-	        iterateToAddMethodsOnInstance(routeMap, this.Truss);
+	        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
 	        Router.add(routeMap);
 
 	        for (var key in config) {
@@ -203,7 +203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param routeMap
 	     */
 	    register: function register(routeMap) {
-	        iterateToAddMethodsOnInstance(routeMap, this.Truss);
+	        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
 	        Router.add(routeMap);
 	    },
 	    /**

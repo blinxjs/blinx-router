@@ -23,7 +23,7 @@ let lastState = {};
  *      name: name of the route
  *      path: path of the route
  * }
- * @param Truss [object]. Used to create and destory instances of modules.
+ * @param Blinx [object]. Used to create and destory instances of modules.
  * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
  * If the value returned is false then the rendering does not happen.
  * Should render is an optional parameter in module</p>
@@ -32,7 +32,7 @@ let lastState = {};
  * If the value returned is false then the module is not destryed on route change.</p>
  *
  */
-let addMethodsOnInstance = function (routeMap, Truss) {
+let addMethodsOnInstance = function (routeMap, Blinx) {
 
     routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
@@ -47,7 +47,7 @@ let addMethodsOnInstance = function (routeMap, Truss) {
         lastState = toRoute;
 
         if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
-            return Truss.createInstance(moduleData);
+            return Blinx.createInstance(moduleData);
         }
 
         done();
@@ -62,7 +62,7 @@ let addMethodsOnInstance = function (routeMap, Truss) {
         let moduleData = routesStore[routeMap.moduleConfig.name];
 
         if (moduleData.module.shouldDestroy && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-            Truss.destroyInstance(moduleData);
+            Blinx.destroyInstance(moduleData);
         }
 
         moduleData.initialized = false;
@@ -73,25 +73,25 @@ let addMethodsOnInstance = function (routeMap, Truss) {
 /**
  * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
  */
-let iterateToAddMethodsOnInstance = function (routeMap, Truss) {
+let iterateToAddMethodsOnInstance = function (routeMap, Blinx) {
 
     if (Array.isArray(routeMap)) {
         routeMap.forEach((route) => {
             route.moduleConfig.name = route.name;
-            addMethodsOnInstance(route, Truss);
+            addMethodsOnInstance(route, Blinx);
         });
     } else {
-        addMethodsOnInstance(routeMap, Truss);
+        addMethodsOnInstance(routeMap, Blinx);
     }
 };
 
 export default {
     /**
      *
-     * @param Truss [object]
+     * @param Blinx [object]
      */
-    init: function (Truss) {
-        this.Truss = Truss;
+    init: function (Blinx) {
+        this.Blinx = Blinx;
     },
     /**
      *
@@ -104,7 +104,7 @@ export default {
      * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
      */
     configure: function (routeMap, config) {
-        iterateToAddMethodsOnInstance(routeMap, this.Truss);
+        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
         Router.add(routeMap);
 
         for (let key in config) {
@@ -130,7 +130,7 @@ export default {
      * @param routeMap
      */
     register: function (routeMap) {
-        iterateToAddMethodsOnInstance(routeMap, this.Truss);
+        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
         Router.add(routeMap);
     },
     /**
