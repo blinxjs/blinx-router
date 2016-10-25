@@ -140,6 +140,9 @@ export default {
     reRegister: function (routeMap) {
         this.register(routeMap);
         Router.stop();
+
+        // Restore lastKnownState
+        Router.lastKnownState = lastState;
         Router.start();
     },
     /**

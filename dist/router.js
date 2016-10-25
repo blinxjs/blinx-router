@@ -213,6 +213,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    reRegister: function reRegister(routeMap) {
 	        this.register(routeMap);
 	        Router.stop();
+
+	        // Restore lastKnownState
+	        Router.lastKnownState = lastState;
 	        Router.start();
 	    },
 	    /**
@@ -333,7 +336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function transitionPath(toState, fromState) {
-	    var fromStateIds = fromState ? nameToIDs(fromState.name) : [];
+	    var fromStateIds = (fromState && fromState.name) ? nameToIDs(fromState.name) : [];
 	    var toStateIds = nameToIDs(toState.name);
 	    var maxI = Math.min(fromStateIds.length, toStateIds.length);
 
@@ -433,13 +436,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _pathParser = __webpack_require__(4);
 
@@ -449,13 +454,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var noop = function noop() {};
 
-	var RouteNode = (function () {
+	var RouteNode = function () {
 	    function RouteNode() {
 	        var name = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
 	        var path = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
@@ -489,7 +492,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var cb = arguments.length <= 1 || arguments[1] === undefined ? noop : arguments[1];
 
-	            var originalRoute = undefined;
+	            var originalRoute = void 0;
 	            if (route === undefined || route === null) return;
 
 	            if (route instanceof Array) {
@@ -507,7 +510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    throw new Error('RouteNode.add() expects routes to have a name and a path defined.');
 	                }
 	                originalRoute = route;
-	                route = new RouteNode(route.name, route.path, route.children);
+	                route = new RouteNode(route.name, route.path, route.children, cb);
 	            }
 
 	            var names = route.name.split('.');
@@ -608,11 +611,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var strictQueryParams = options.strictQueryParams;
 
 	            var matchChildren = function matchChildren(nodes, pathSegment, segments) {
+	                var isRoot = nodes.length === 1 && nodes[0].name === '';
+	                // for (child of node.children) {
+
 	                var _loop = function _loop(i) {
 	                    var child = nodes[i];
 	                    // Partially match path
 	                    var match = child.parser.partialMatch(pathSegment);
-	                    var remainingPath = undefined;
+	                    var remainingPath = void 0;
 
 	                    if (!match && trailingSlash) {
 	                        // Try with optional trailing slash
@@ -625,7 +631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        var search = (0, _searchParams.omit)((0, _searchParams.getSearch)(pathSegment.replace(consumedPath, '')), child.parser.queryParams.concat(child.parser.queryParamsBr));
 	                        remainingPath = (0, _searchParams.getPath)(remainingPath) + (search ? '?' + search : '');
 
-	                        if (trailingSlash && remainingPath === '/' && !/\/$/.test(consumedPath)) {
+	                        if (trailingSlash && !isRoot && remainingPath === '/' && !/\/$/.test(consumedPath)) {
 	                            remainingPath = '';
 	                        }
 	                    }
@@ -636,13 +642,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            return segments.params[param] = match[param];
 	                        });
 
-	                        if (!remainingPath.length || // fully matched
-	                        !strictQueryParams && remainingPath.indexOf('?') === 0 // unmatched queryParams in non strict mode
-	                        ) {
-	                                return {
-	                                    v: segments
-	                                };
-	                            }
+	                        if (!isRoot && !remainingPath.length) {
+	                            // fully matched
+	                            return {
+	                                v: segments
+	                            };
+	                        }
+	                        if (!isRoot && !strictQueryParams && remainingPath.indexOf('?') === 0) {
+	                            // unmatched queryParams in non strict mode
+	                            var remainingQueryParams = (0, _searchParams.parse)(remainingPath.slice(1));
+
+	                            remainingQueryParams.forEach(function (_ref) {
+	                                var name = _ref.name;
+	                                var value = _ref.value;
+	                                return segments.params[name] = value;
+	                            });
+	                            return {
+	                                v: segments
+	                            };
+	                        }
 	                        // If no children to match against but unmatched path left
 	                        if (!child.children.length) {
 	                            return {
@@ -656,12 +674,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 
-	                // for (child of node.children) {
 	                for (var i in nodes) {
 	                    var _ret = _loop(i);
 
 	                    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 	                }
+
 	                return null;
 	            };
 
@@ -703,7 +721,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var searchPart = !searchParams.length ? null : searchParams.filter(function (p) {
 	                return Object.keys(params).indexOf((0, _searchParams.withoutBrackets)(p)) !== -1;
 	            }).map(function (p) {
-	                return _pathParser2.default.serialise(p, params[(0, _searchParams.withoutBrackets)(p)]);
+	                var val = params[(0, _searchParams.withoutBrackets)(p)];
+	                var encodedVal = Array.isArray(val) ? val.map(encodeURIComponent) : encodeURIComponent(val);
+
+	                return _pathParser2.default.serialise(p, encodedVal);
 	            }).join('&');
 
 	            return segments.map(function (segment) {
@@ -782,7 +803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }]);
 
 	    return RouteNode;
-	})();
+	}();
 
 	exports.default = RouteNode;
 	module.exports = exports['default'];
@@ -1225,11 +1246,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var _browser = __webpack_require__(5);
 
@@ -1277,10 +1298,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var defaultRoute = _router$options.defaultRoute;
 	            var defaultParams = _router$options.defaultParams;
 
+
 	            if (!state) {
 	                // If current state is already the default route, we will have a double entry
 	                // Navigating back and forth will emit SAME_STATES error
-	                router.navigate(defaultRoute, defaultParams, { forceDeactivate: forceDeactivate, reload: true, replace: true });
+	                defaultRoute && router.navigate(defaultRoute, defaultParams, { forceDeactivate: forceDeactivate, reload: true, replace: true });
+	                if(!defaultRoute){
+	                    var err = { code: "ROUTE_NOT_FOUND" };
+	                    router._invokeListeners('$$error', null, router.lastKnownState, err);
+	                    router.lastKnownState = undefined;
+	                }
 	                return;
 	            }
 	            if (router.lastKnownState && router.areStatesEqual(state, router.lastKnownState, false)) {
@@ -1302,9 +1329,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        // else do nothing or history will be messed up
 	                        // TODO: history.back()?
 	                    } else {
-	                            // Force navigation to default state
-	                            router.navigate(defaultRoute, defaultParams, { forceDeactivate: forceDeactivate, reload: true, replace: true });
-	                        }
+	                        // Force navigation to default state
+	                        defaultRoute && router.navigate(defaultRoute, defaultParams, { forceDeactivate: forceDeactivate, reload: true, replace: true });
+	                    }
 	                } else {
 	                    router._invokeListeners('$$success', toState, fromState, { replace: true });
 	                }
@@ -1334,6 +1361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	exports.default = historyPlugin;
+
 
 /***/ },
 /* 7 */
