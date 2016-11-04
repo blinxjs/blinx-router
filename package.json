@@ -1,6 +1,6 @@
 {
   "name": "blinx-router",
-  "version": "0.9.6",
+  "version": "0.9.61",
   "description": "Router for Blinx Applications.",
   "main": "lib/index.js",
   "scripts": {
