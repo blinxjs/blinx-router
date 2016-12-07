@@ -149,7 +149,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
-	        if (moduleData.module.shouldDestroy && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+	        if (typeof moduleData.module.shouldDestroy === "function" && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+	            Blinx.destroyInstance(moduleData);
+	        } else if (typeof moduleData.module.shouldDestroy === "undefined") {
 	            Blinx.destroyInstance(moduleData);
 	        }
 
