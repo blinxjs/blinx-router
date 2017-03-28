@@ -46,8 +46,23 @@ let addMethodsOnInstance = function (routeMap, Blinx) {
 
         lastState = toRoute;
 
+        let parentsRouteArr = [];
+        Object.keys(Router.lastStateAttempt._meta).forEach( route => {
+            if (Router.areStatesDescendants(Object.assign({params: []}, {name: route}), Object.assign({params: []}, moduleData))){
+                parentsRouteArr.push(route);
+            }
+        });
+        let immediateParent = parentsRouteArr.reduce((prev, curr) => {
+
+            if(curr.split(".").length >= prev.split(".").length){
+                return curr;
+            } else {
+                return prev;
+            }
+        }, "");
+
         if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
-            return Blinx.createInstance(moduleData);
+            return Blinx.createInstance(moduleData, immediateParent);
         }
 
         done();
@@ -61,7 +76,9 @@ let addMethodsOnInstance = function (routeMap, Blinx) {
 
         let moduleData = routesStore[routeMap.moduleConfig.name];
 
-        if (moduleData.module.shouldDestroy && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+        if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+            Blinx.destroyInstance(moduleData);
+        } else if((typeof moduleData.module.shouldDestroy === "undefined")){
             Blinx.destroyInstance(moduleData);
         }
 
@@ -140,6 +157,9 @@ export default {
     reRegister: function (routeMap) {
         this.register(routeMap);
         Router.stop();
+
+        // Restore lastKnownState
+        Router.lastKnownState = lastState;
         Router.start();
     },
     /**
