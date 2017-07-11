@@ -38,7 +38,7 @@ configRouter.start();
 #### init: function
 To intiliaze router, frameWorkInstance needs to be passed.
 ```
-	configRouter.init(frameWorkInstance);
+configRouter.init(frameWorkInstance);
 ```
 Where frameWorkInstance should implement "createInstance" and "destroInstance" method for creating and destroying UI components respectively.
 
