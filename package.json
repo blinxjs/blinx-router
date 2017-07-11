@@ -1,7 +1,7 @@
 {
-  "name": "blinx-router",
-  "version": "0.9.7",
-  "description": "Router for Blinx Applications.",
+  "name": "config-router",
+  "version": "0.0.1",
+  "description": "Router for UI Applications.",
   "main": "lib/index.js",
   "scripts": {
     "build": "npm run build:commonjs && npm run build:umd && npm run build:umd:min",
@@ -14,17 +14,16 @@
     "url": "git+https://github.com/blinxjs/blinx-router.git"
   },
   "keywords": [
-    "Blinx",
-    "BlinxJs",
+    "config",
     "Router",
     "Router5"
   ],
   "author": "truss-developers@flipkart.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/blinxjs/blinx-router/issues"
+    "url": "https://github.com/blinxjs/config-router/issues"
   },
-  "homepage": "https://github.com/blinxjs/blinx-router#readme",
+  "homepage": "https://github.com/blinxjs/config-router#readme",
   "dependencies": {
     "router5": "git+https://github.com/blinxjs/router5.git",
     "router5-history": "git+https://github.com/blinxjs/router5-history.git",
