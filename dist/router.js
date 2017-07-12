@@ -87,7 +87,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Router = new _router.Router5();
 	var routesStore = {};
 	var lastState = {};
-
 	/**
 	 *
 	 * @param routeMap [object] of the format
@@ -96,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      name: name of the route
 	 *      path: path of the route
 	 * }
-	 * @param Blinx [object]. Used to create and destory instances of modules.
+	 * @param instance [object]. Used to create and destory instances of modules.
 	 * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
 	 * If the value returned is false then the rendering does not happen.
 	 * Should render is an optional parameter in module</p>
@@ -105,17 +104,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * If the value returned is false then the module is not destryed on route change.</p>
 	 *
 	 */
-	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, Blinx) {
+	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, instance) {
 
 	    routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
 	    routeMap.canActivate = function (toRoute, fromRoute, done) {
 
+	        var moduleData = routesStore[routeMap.moduleConfig.name];
+
+	        if (moduleData.type && !instance[moduleData.type] && !instance["default"]) {
+	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
+	        }
+
+	        var moduleType = instance[moduleData.type] || instance["default"];
+
 	        if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
 	            return true;
 	        }
-
-	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
 	        lastState = toRoute;
 
@@ -135,7 +140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, "");
 
 	        if (moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute) || !moduleData.module.shouldRender) {
-	            return Blinx.createInstance(moduleData, immediateParent);
+	            return moduleType.createInstance(moduleData, immediateParent);
 	        }
 
 	        done();
@@ -143,16 +148,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 
+	        var moduleData = routesStore[routeMap.moduleConfig.name];
+
+	        if (moduleData.type && !instance[moduleData.type] && !instance["default"]) {
+	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
+	        }
+
+	        var moduleType = instance[moduleData.type] || instance["default"];
+
 	        if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
 	            return true;
 	        }
 
-	        var moduleData = routesStore[routeMap.moduleConfig.name];
-
 	        if (typeof moduleData.module.shouldDestroy === "function" && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-	            Blinx.destroyInstance(moduleData);
+	            moduleType.destroyInstance(moduleData);
 	        } else if (typeof moduleData.module.shouldDestroy === "undefined") {
-	            Blinx.destroyInstance(moduleData);
+	            moduleType.destroyInstance(moduleData);
 	        }
 
 	        moduleData.initialized = false;
@@ -163,25 +174,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
 	 */
-	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, Blinx) {
+	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, instance) {
 
 	    if (Array.isArray(routeMap)) {
 	        routeMap.forEach(function (route) {
 	            route.moduleConfig.name = route.name;
-	            addMethodsOnInstance(route, Blinx);
+	            addMethodsOnInstance(route, instance);
 	        });
 	    } else {
-	        addMethodsOnInstance(routeMap, Blinx);
+	        addMethodsOnInstance(routeMap, instance);
 	    }
 	};
 
 	exports.default = {
 	    /**
 	     *
-	     * @param Blinx [object]
+	     * @param Instance [object]
 	     */
-	    init: function init(Blinx) {
-	        this.Blinx = Blinx;
+	    init: function init(instanceObjs) {
+	        this.instance = instanceObjs;
 	    },
 	    /**
 	     *
@@ -194,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
 	     */
 	    configure: function configure(routeMap, config) {
-	        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
+	        iterateToAddMethodsOnInstance(routeMap, this.instance);
 	        Router.add(routeMap);
 
 	        for (var key in config) {
@@ -220,7 +231,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param routeMap
 	     */
 	    register: function register(routeMap) {
-	        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
+	        iterateToAddMethodsOnInstance(routeMap, this.instance);
 	        Router.add(routeMap);
 	    },
 	    /**
@@ -736,7 +747,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }, []);
 
 	            var searchPart = !searchParams.length ? null : searchParams.filter(function (p) {
-	                return Object.keys(params).indexOf((0, _searchParams.withoutBrackets)(p)) !== -1;
+	                if (Object.keys(params).indexOf((0, _searchParams.withoutBrackets)(p)) === -1) {
+	                    return false;
+	                }
+
+	                var val = params[(0, _searchParams.withoutBrackets)(p)];
+
+	                return val !== undefined && val !== null;
 	            }).map(function (p) {
 	                var val = params[(0, _searchParams.withoutBrackets)(p)];
 	                var encodedVal = Array.isArray(val) ? val.map(encodeURIComponent) : encodeURIComponent(val);
@@ -1208,7 +1225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Browser functions needed by router5
 	 */
 	var getBase = function getBase() {
-	    return window.location.pathname.replace(/\/$/, '');
+	    return (window.location.pathname + window.location.search).replace(/\/$/, '');
 	};
 
 	var pushState = function pushState(state, title, path) {
@@ -1229,7 +1246,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var getLocation = function getLocation(opts) {
 	    var path = opts.useHash ? window.location.hash.replace(new RegExp('^#' + opts.hashPrefix), '') : window.location.pathname.replace(new RegExp('^' + opts.base), '');
-	    return (path || '/') + window.location.search;
+	    return (path || '/') + (opts.ignoreSearch ? "" : window.location.search);
 	};
 
 	var getState = function getState() {
@@ -1256,6 +1273,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	exports.default = browser;
+
 
 /***/ },
 /* 6 */
@@ -2587,7 +2605,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var split = param.split('=');
 	        var name = split[0];
 	        var value = split[1];
-	        return params.concat({ name: name, value: decodeURIComponent(value) });
+
+	        return params.concat(split.length === 1 ? { name: name, value: true } : { name: name, value: decodeURIComponent(value) });
 	    }, []);
 	};
 
@@ -2620,12 +2639,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @return {String}          The querystring
 	 */
 	var build = exports.build = function build(paramList) {
-	    return paramList.map(function (_ref2) {
-	        var name = _ref2.name;
+	    return paramList.filter(function (_ref2) {
 	        var value = _ref2.value;
-	        return [name].concat(isSerialisable(value) ? encodeURIComponent(value) : []);
-	    }).map(function (param) {
-	        return param.join('=');
+	        return value !== undefined && value !== null;
+	    }).map(function (_ref3) {
+	        var name = _ref3.name;
+	        var value = _ref3.value;
+	        return value === true ? name : name + '=' + encodeURIComponent(value);
 	    }).join('&');
 	};
 
@@ -2638,8 +2658,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var omit = exports.omit = function omit(querystring, paramsToOmit) {
 	    if (!querystring) return '';
 
-	    var remainingQueryParams = parse(querystring).filter(function (_ref3) {
-	        var name = _ref3.name;
+	    var remainingQueryParams = parse(querystring).filter(function (_ref4) {
+	        var name = _ref4.name;
 	        return paramsToOmit.indexOf(withoutBrackets(name)) === -1;
 	    });
 	    var remainingQueryString = build(remainingQueryParams);
