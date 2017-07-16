@@ -31,7 +31,7 @@ let lastState = {};
  * If the value returned is false then the module is not destryed on route change.</p>
  *
  */
-let addMethodsOnInstance = function (routeMap, instance) {
+let addMethodsOnInstance = function (routeMap, instances) {
 
     routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
@@ -39,11 +39,11 @@ let addMethodsOnInstance = function (routeMap, instance) {
 
         let moduleData = routesStore[routeMap.moduleConfig.name];
 
-        if(moduleData.type && !instance[moduleData.type] && !instance["default"]){
+        if(moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]){
             throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
         }
 
-        const moduleType = instance[moduleData.type] || instance["default"];
+        const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
         if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
             return true;
@@ -71,7 +71,7 @@ let addMethodsOnInstance = function (routeMap, instance) {
 
 
 if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
-    return moduleType.createInstance(moduleData, immediateParent);
+    return frameworkInstance.createInstance(moduleData, immediateParent);
 }
 
 done();
@@ -81,20 +81,20 @@ Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 
     let moduleData = routesStore[routeMap.moduleConfig.name];
 
-    if(moduleData.type && !instance[moduleData.type] && !instance["default"]){
+    if(moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]){
         throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
     }
 
-    const moduleType = instance[moduleData.type] || instance["default"];
+    const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
     if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
         return true;
     }
 
     if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-        moduleType.destroyInstance(moduleData);
+        frameworkInstance.destroyInstance(moduleData);
     } else if((typeof moduleData.module.shouldDestroy === "undefined")){
-        moduleType.destroyInstance(moduleData);
+        frameworkInstance.destroyInstance(moduleData);
     }
 
     moduleData.initialized = false;
@@ -105,15 +105,15 @@ Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 /**
  * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
  */
-let iterateToAddMethodsOnInstance = function (routeMap, instance) {
+let iterateToAddMethodsOnInstance = function (routeMap, instances) {
 
     if (Array.isArray(routeMap)) {
         routeMap.forEach((route) => {
             route.moduleConfig.name = route.name;
-        addMethodsOnInstance(route, instance);
+        addMethodsOnInstance(route, instances);
     });
 } else {
-    addMethodsOnInstance(routeMap, instance);
+    addMethodsOnInstance(routeMap, instances);
 }
 };
 
@@ -122,8 +122,8 @@ export default {
      *
      * @param Instance [object]
      */
-    init: function (instanceObjs) {
-        this.instance = instanceObjs;
+    init: function (instances) {
+        this.instances = instances;
     },
     /**
      *
@@ -136,7 +136,7 @@ export default {
      * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
      */
     configure: function (routeMap, config) {
-        iterateToAddMethodsOnInstance(routeMap, this.instance);
+        iterateToAddMethodsOnInstance(routeMap, this.instances);
         Router.add(routeMap);
 
         for (let key in config) {
@@ -162,7 +162,7 @@ export default {
      * @param routeMap
      */
     register: function (routeMap) {
-        iterateToAddMethodsOnInstance(routeMap, this.instance);
+        iterateToAddMethodsOnInstance(routeMap, this.instances);
         Router.add(routeMap);
     },
     /**

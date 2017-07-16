@@ -104,7 +104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * If the value returned is false then the module is not destryed on route change.</p>
 	 *
 	 */
-	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, instance) {
+	var addMethodsOnInstance = function addMethodsOnInstance(routeMap, instances) {
 
 	    routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
@@ -112,11 +112,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
-	        if (moduleData.type && !instance[moduleData.type] && !instance["default"]) {
+	        if (moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]) {
 	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
 	        }
 
-	        var moduleType = instance[moduleData.type] || instance["default"];
+	        var frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
 	        if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
 	            return true;
@@ -140,7 +140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, "");
 
 	        if (moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute) || !moduleData.module.shouldRender) {
-	            return moduleType.createInstance(moduleData, immediateParent);
+	            return frameworkInstance.createInstance(moduleData, immediateParent);
 	        }
 
 	        done();
@@ -150,20 +150,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
-	        if (moduleData.type && !instance[moduleData.type] && !instance["default"]) {
+	        if (moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]) {
 	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
 	        }
 
-	        var moduleType = instance[moduleData.type] || instance["default"];
+	        var frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
 	        if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
 	            return true;
 	        }
 
 	        if (typeof moduleData.module.shouldDestroy === "function" && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-	            moduleType.destroyInstance(moduleData);
+	            frameworkInstance.destroyInstance(moduleData);
 	        } else if (typeof moduleData.module.shouldDestroy === "undefined") {
-	            moduleType.destroyInstance(moduleData);
+	            frameworkInstance.destroyInstance(moduleData);
 	        }
 
 	        moduleData.initialized = false;
@@ -174,15 +174,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
 	 */
-	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, instance) {
+	var iterateToAddMethodsOnInstance = function iterateToAddMethodsOnInstance(routeMap, instances) {
 
 	    if (Array.isArray(routeMap)) {
 	        routeMap.forEach(function (route) {
 	            route.moduleConfig.name = route.name;
-	            addMethodsOnInstance(route, instance);
+	            addMethodsOnInstance(route, instances);
 	        });
 	    } else {
-	        addMethodsOnInstance(routeMap, instance);
+	        addMethodsOnInstance(routeMap, instances);
 	    }
 	};
 
@@ -191,8 +191,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	     *
 	     * @param Instance [object]
 	     */
-	    init: function init(instanceObjs) {
-	        this.instance = instanceObjs;
+	    init: function init(instances) {
+	        this.instances = instances;
 	    },
 	    /**
 	     *
@@ -205,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
 	     */
 	    configure: function configure(routeMap, config) {
-	        iterateToAddMethodsOnInstance(routeMap, this.instance);
+	        iterateToAddMethodsOnInstance(routeMap, this.instances);
 	        Router.add(routeMap);
 
 	        for (var key in config) {
@@ -231,7 +231,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param routeMap
 	     */
 	    register: function register(routeMap) {
-	        iterateToAddMethodsOnInstance(routeMap, this.instance);
+	        iterateToAddMethodsOnInstance(routeMap, this.instances);
 	        Router.add(routeMap);
 	    },
 	    /**
