@@ -22,7 +22,7 @@ let lastState = {};
  *      name: name of the route
  *      path: path of the route
  * }
- * @param instance [object]. Used to create and destory instances of modules.
+ * @param instances [object]. Used to create and destory instances of modules.
  * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
  * If the value returned is false then the rendering does not happen.
  * Should render is an optional parameter in module</p>
@@ -35,13 +35,19 @@ let addMethodsOnInstance = function (routeMap, instances) {
 
     routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
-    routeMap.canActivate = function (toRoute, fromRoute, done) {
-
+    let getModuleData = function(){
         let moduleData = routesStore[routeMap.moduleConfig.name];
 
         if(moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]){
             throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
         }
+
+        return moduleData;
+    }
+
+    routeMap.canActivate = function (toRoute, fromRoute, done) {
+
+        let moduleData = getModuleData();
 
         const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
@@ -58,49 +64,45 @@ let addMethodsOnInstance = function (routeMap, instances) {
             if (Router.areStatesDescendants(Object.assign({params: []}, {name: route}), Object.assign({params: []}, moduleData))){
             parentsRouteArr.push(route);
         }
-    });
-    let immediateParent = parentsRouteArr.reduce((prev, curr) => {
+        });
+        let immediateParent = parentsRouteArr.reduce((prev, curr) => {
 
-            if(curr.split(".").length >= prev.split(".").length){
-        return curr;
-    } else {
-        return prev;
-    }
-}, "");
+                    if(curr.split(".").length >= prev.split(".").length){
+                return curr;
+            } else {
+                return prev;
+            }
+        }, "");
 
 
 
-if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
-    return frameworkInstance.createInstance(moduleData, immediateParent);
-}
+        if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
+            return frameworkInstance.createInstance(moduleData, immediateParent);
+        }
 
-done();
-};
+        done();
+      };
 
-Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
+      Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 
-    let moduleData = routesStore[routeMap.moduleConfig.name];
+          let moduleData = getModuleData();
 
-    if(moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]){
-        throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
-    }
+          const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
-    const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
+          if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
+              return true;
+          }
 
-    if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
-        return true;
-    }
+          if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+              frameworkInstance.destroyInstance(moduleData);
+          } else if((typeof moduleData.module.shouldDestroy === "undefined")){
+              frameworkInstance.destroyInstance(moduleData);
+          }
 
-    if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-        frameworkInstance.destroyInstance(moduleData);
-    } else if((typeof moduleData.module.shouldDestroy === "undefined")){
-        frameworkInstance.destroyInstance(moduleData);
-    }
-
-    moduleData.initialized = false;
-    return true;
-});
-};
+          moduleData.initialized = false;
+          return true;
+      });
+  };
 
 /**
  * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
@@ -120,7 +122,7 @@ let iterateToAddMethodsOnInstance = function (routeMap, instances) {
 export default {
     /**
      *
-     * @param Instance [object]
+     * @param Instances [object]
      */
     init: function (instances) {
         this.instances = instances;
