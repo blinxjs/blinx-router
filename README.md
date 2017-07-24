@@ -1,48 +1,46 @@
-### Blinx Router
-Blinx Router is a wrapper over [Router5](http://router5.github.io/) following philosophy of Blinx. Blinx Router exposes only the methods/properties required in building a typical single page Blinx application.
+### Config Router
+Config Router is a wrapper over [Router5](http://router5.github.io/) following philosophy of Config driven approach. Config Router exposes only the methods/properties required in building a typical single page application.
 
 #### Installation
-Blinx Router distributables are available inside "dist" directory. And it can be included in any html using script tag as:
+Config Router distributables are available inside "dist" directory. And it can be included in any html using script tag as:
 ```
-<script src="//raw.githubusercontent.com/blinxjs/blinx-router/master/dist/router.min.js"></script>
+<script src="//raw.githubusercontent.com/sarunathan/config-router/master/dist/router.min.js"></script>
 ```
-This way it will make BlinxRouter available globally. All the methods and properties of Blinx Router can be accessed over default property of BlinxRouter. Example:
-```
-BlinxRouter.default.init(BlinxJs);
-```
+This way it will make configRouter available globally.
 
 Blinx Router is available over npm also. It can be installed using npm as
 ```
-npm install blinx-router --save
+npm install config-router --save
 ```
 Which can be accessed as 
 ```
-import BlinxRouter from "blinx-router";
+import configRouter from "config-router";
 ```
 
 #### Usage
-To start using Blinx Router, these basic steps are required:
+To start using Config Router, these basic steps are required:
 ```
-// Require Blinx Router
-import BlinxRouter from "blinx-router";
+// Require Config Router
+import configRouter from "config-router";
 
 // Initialize Router
-BlinxRouter.init(BlinxJs);
+configRouter.init(instance); // Where instance should implement "createInstance" and "destroInstance" method. 
 
 // Configure Router
-BlinxRouter.configure(routeMap, routerOptions);
+configRouter.configure(routeMap, routerOptions);
 
 // Start Router
-BlinxRouter.start();
+configRouter.start();
 ```
 
 #### APIs
 
 #### init: function
-To intiliaze router, BlinxJs needs to be passed.
+To intiliaze router, frameWorkInstance needs to be passed.
 ```
-	BlinxRouter.init(BlinxJs);
+configRouter.init(frameWorkInstance);
 ```
+Where frameWorkInstance should implement "createInstance" and "destroInstance" method for creating and destroying UI components respectively.
 
 #### configure: function
 Accepts two parameters

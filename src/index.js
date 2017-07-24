@@ -14,7 +14,6 @@ import listenersPlugin from "router5-listeners";
 let Router = new Router5();
 let routesStore = {};
 let lastState = {};
-
 /**
  *
  * @param routeMap [object] of the format
@@ -23,7 +22,7 @@ let lastState = {};
  *      name: name of the route
  *      path: path of the route
  * }
- * @param Blinx [object]. Used to create and destory instances of modules.
+ * @param instances [object]. Used to create and destory instances of modules.
  * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
  * If the value returned is false then the rendering does not happen.
  * Should render is an optional parameter in module</p>
@@ -32,83 +31,101 @@ let lastState = {};
  * If the value returned is false then the module is not destryed on route change.</p>
  *
  */
-let addMethodsOnInstance = function (routeMap, Blinx) {
+let addMethodsOnInstance = function (routeMap, instances) {
 
     routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
+    let getModuleData = function(){
+        let moduleData = routesStore[routeMap.moduleConfig.name];
+
+        if(moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]){
+            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
+        }
+
+        return moduleData;
+    }
+
     routeMap.canActivate = function (toRoute, fromRoute, done) {
+
+        let moduleData = getModuleData();
+
+        const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
         if (Router.isActive(toRoute.name, toRoute.params, true, false)) {
             return true;
         }
 
-        let moduleData = routesStore[routeMap.moduleConfig.name];
+
 
         lastState = toRoute;
 
         let parentsRouteArr = [];
         Object.keys(Router.lastStateAttempt._meta).forEach( route => {
             if (Router.areStatesDescendants(Object.assign({params: []}, {name: route}), Object.assign({params: []}, moduleData))){
-                parentsRouteArr.push(route);
-            }
+            parentsRouteArr.push(route);
+        }
         });
         let immediateParent = parentsRouteArr.reduce((prev, curr) => {
 
-            if(curr.split(".").length >= prev.split(".").length){
+                    if(curr.split(".").length >= prev.split(".").length){
                 return curr;
             } else {
                 return prev;
             }
         }, "");
 
+
+
         if ((moduleData.module.shouldRender && moduleData.module.shouldRender(toRoute, fromRoute)) || !moduleData.module.shouldRender) {
-            return Blinx.createInstance(moduleData, immediateParent);
+            return frameworkInstance.createInstance(moduleData, immediateParent);
         }
 
         done();
-    };
+      };
 
-    Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
+      Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 
-        if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
-            return true;
-        }
+          let moduleData = getModuleData();
 
-        let moduleData = routesStore[routeMap.moduleConfig.name];
+          const frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
-        if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
-            Blinx.destroyInstance(moduleData);
-        } else if((typeof moduleData.module.shouldDestroy === "undefined")){
-            Blinx.destroyInstance(moduleData);
-        }
+          if (Router.isActive(toRoute.name, toRoute.params, true, true)) {
+              return true;
+          }
 
-        moduleData.initialized = false;
-        return true;
-    });
-};
+          if ((typeof moduleData.module.shouldDestroy === "function") && moduleData.module.shouldDestroy(toRoute, fromRoute)) {
+              frameworkInstance.destroyInstance(moduleData);
+          } else if((typeof moduleData.module.shouldDestroy === "undefined")){
+              frameworkInstance.destroyInstance(moduleData);
+          }
+
+          moduleData.initialized = false;
+          return true;
+      });
+  };
 
 /**
  * @param routeMap {Object|Array}. If array then iterates over routeMap to call {@link addMethodsOnInstance}
  */
-let iterateToAddMethodsOnInstance = function (routeMap, Blinx) {
+let iterateToAddMethodsOnInstance = function (routeMap, instances) {
 
     if (Array.isArray(routeMap)) {
         routeMap.forEach((route) => {
             route.moduleConfig.name = route.name;
-            addMethodsOnInstance(route, Blinx);
-        });
-    } else {
-        addMethodsOnInstance(routeMap, Blinx);
-    }
+        addMethodsOnInstance(route, instances);
+    });
+} else {
+    addMethodsOnInstance(routeMap, instances);
+}
 };
 
 export default {
     /**
      *
-     * @param Blinx [object]
+     * @param Instances [object]
      */
-    init: function (Blinx) {
-        this.Blinx = Blinx;
+    init: function (instances) {
+        this.instances = instances;
     },
     /**
      *
@@ -121,7 +138,7 @@ export default {
      * @param config [object] Router configuration . This method internally calls the Router.setOption method of Router 5
      */
     configure: function (routeMap, config) {
-        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
+        iterateToAddMethodsOnInstance(routeMap, this.instances);
         Router.add(routeMap);
 
         for (let key in config) {
@@ -147,7 +164,7 @@ export default {
      * @param routeMap
      */
     register: function (routeMap) {
-        iterateToAddMethodsOnInstance(routeMap, this.Blinx);
+        iterateToAddMethodsOnInstance(routeMap, this.instances);
         Router.add(routeMap);
     },
     /**
