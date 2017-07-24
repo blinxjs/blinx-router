@@ -95,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      name: name of the route
 	 *      path: path of the route
 	 * }
-	 * @param instance [object]. Used to create and destory instances of modules.
+	 * @param instances [object]. Used to create and destory instances of modules.
 	 * <p>If shouldRender method is present in the moduleConfig of the module then the method is called.
 	 * If the value returned is false then the rendering does not happen.
 	 * Should render is an optional parameter in module</p>
@@ -108,13 +108,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    routesStore[routeMap.moduleConfig.name] = routeMap.moduleConfig;
 
-	    routeMap.canActivate = function (toRoute, fromRoute, done) {
-
+	    var getModuleData = function getModuleData() {
 	        var moduleData = routesStore[routeMap.moduleConfig.name];
 
 	        if (moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]) {
 	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
 	        }
+
+	        return moduleData;
+	    };
+
+	    routeMap.canActivate = function (toRoute, fromRoute, done) {
+
+	        var moduleData = getModuleData();
 
 	        var frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
@@ -148,11 +154,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    Router.canDeactivate(routeMap.name, function (toRoute, fromRoute, done) {
 
-	        var moduleData = routesStore[routeMap.moduleConfig.name];
-
-	        if (moduleData.instanceType && !instances[moduleData.instanceType] && !instances["default"]) {
-	            throw new Error("Instance Object passed in config-router doesn't have module 'type' that is passed in '$moduleData.moduleName'");
-	        }
+	        var moduleData = getModuleData();
 
 	        var frameworkInstance = instances[moduleData.instanceType] || instances["default"];
 
@@ -189,7 +191,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = {
 	    /**
 	     *
-	     * @param Instance [object]
+	     * @param Instances [object]
 	     */
 	    init: function init(instances) {
 	        this.instances = instances;
