@@ -3,7 +3,8 @@
  * Mostly the methods used in this router are simple wrapper around Router 5
  * @external http://router5.github.io/
  */
-import {Router5, loggerPlugin} from "router5";
+import {loggerPlugin} from "router5";
+import createRouter from 'router5';
 import linkInterceptor from "router5-link-interceptor";
 import browserPlugin from 'router5/plugins/browser';
 import listenersPlugin from 'router5/plugins/listeners';
@@ -11,7 +12,7 @@ import listenersPlugin from 'router5/plugins/listeners';
 /**
  * Private store for Router.
  */
-let Router = new Router5();
+let Router = createRouter();
 let routesStore = {};
 let lastState = {};
 

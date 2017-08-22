@@ -62,6 +62,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _router = __webpack_require__(15);
 
+	var _router2 = _interopRequireDefault(_router);
+
 	var _router5LinkInterceptor = __webpack_require__(6);
 
 	var _router5LinkInterceptor2 = _interopRequireDefault(_router5LinkInterceptor);
@@ -79,12 +81,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * Private store for Router.
 	 */
-	/**
-	 * This router extends the functionality of Router 5.
-	 * Mostly the methods used in this router are simple wrapper around Router 5
-	 * @external http://router5.github.io/
-	 */
-	var Router = new _router.Router5();
+	var Router = (0, _router2.default)(); /**
+	                                       * This router extends the functionality of Router 5.
+	                                       * Mostly the methods used in this router are simple wrapper around Router 5
+	                                       * @external http://router5.github.io/
+	                                       */
+
 	var routesStore = {};
 	var lastState = {};
 
