@@ -1,6 +1,6 @@
 {
   "name": "blinx-router",
-  "version": "0.9.62",
+  "version": "0.9.7",
   "description": "Router for Blinx Applications.",
   "main": "lib/index.js",
   "scripts": {
@@ -26,10 +26,8 @@
   },
   "homepage": "https://github.com/blinxjs/blinx-router#readme",
   "dependencies": {
-    "router5": "git+https://github.com/blinxjs/router5.git",
-    "router5-history": "git+https://github.com/blinxjs/router5-history.git",
-    "router5-link-interceptor": "3.0.0",
-    "router5-listeners": "3.0.0"
+    "router5": "5.1.2",
+    "router5-link-interceptor": "3.0.0"
   },
   "devDependencies": {
     "babel-cli": "6.10.1",

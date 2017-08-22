@@ -4,9 +4,9 @@
  * @external http://router5.github.io/
  */
 import {Router5, loggerPlugin} from "router5";
-import historyPlugin from "router5-history";
 import linkInterceptor from "router5-link-interceptor";
-import listenersPlugin from "router5-listeners";
+import browserPlugin from 'router5/plugins/browser';
+import listenersPlugin from 'router5/plugins/listeners';
 
 /**
  * Private store for Router.
@@ -124,6 +124,7 @@ export default {
         iterateToAddMethodsOnInstance(routeMap, this.Blinx);
         Router.add(routeMap);
 
+
         for (let key in config) {
             Router.setOption(key, config[key]);
         }
@@ -133,7 +134,9 @@ export default {
         }
 
         if (config.history) {
-            Router.usePlugin(historyPlugin());
+            Router.usePlugin(browserPlugin({
+                useHash: true
+            }));
         }
 
         if (config.listener) {
