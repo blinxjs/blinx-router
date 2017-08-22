@@ -48,7 +48,7 @@ let addMethodsOnInstance = function (routeMap, Blinx) {
         lastState = toRoute;
 
         let parentsRouteArr = [];
-        Object.keys(Router.lastStateAttempt._meta).forEach( route => {
+        Object.keys(Router.lastStateAttempt && Router.lastStateAttempt._meta).forEach( route => {
             if (Router.areStatesDescendants(Object.assign({params: []}, {name: route}), Object.assign({params: []}, moduleData))){
                 parentsRouteArr.push(route);
             }
